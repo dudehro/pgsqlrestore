@@ -1,0 +1,21 @@
+services:
+    postgres-restore:
+        image: pkorduan/postgis:15-3.3
+        container_name: ${NETWORK_NAME:-kvwmap_prod}_pgsqlrestore
+        hostname: ${NETWORK_NAME:-kvwmap_prod}_pgsqlrestore
+        volumes:
+          - ./data:/var/lib/postgresql/data
+          - ./config:/var/lib/postgresql/config:ro
+          - ./pgbackrest:/pgbackrest:ro
+          - ./logs:/var/log/pgsql
+          - ./dumps:/dumps
+        ports:
+         - "5444:5432"
+        networks:
+            default:
+                aliases:
+                    - pgsqlrestore
+networks:
+    default:
+        name: ${NETWORK_NAME:-kvwmap_prod}
+        external: true
