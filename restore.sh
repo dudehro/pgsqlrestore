@@ -7,9 +7,9 @@ PGBR_STANZA="local"
 usage() {
   cat <<EOF
 Nutzung:
-  $0 list                 Verfügbare Backup-Sets anzeigen
-  $0 restore <SETLABEL>   Backup-Set wiederherstellen
-  $0 start                Restore-Instanz starten
+  $0 list                          Verfügbare Backup-Sets anzeigen
+  $0 restore [SETLABEL]            Backup-Set wiederherstellen (ohne SETLABEL: letztes Backup)
+  $0 start                         Restore-Instanz starten
 EOF
   exit 2
 }
@@ -25,10 +25,15 @@ cmd_list() {
 }
 
 cmd_restore() {
-  local setlabel="$1"
+  local setlabel="${1:-}"
 
   mkdir -p ./data ./logs
   chown 999:gisadmin ./data ./logs
+
+  local set_arg=()
+  if [[ -n "$setlabel" ]]; then
+    set_arg=("--set=$setlabel")
+  fi
 
   docker run --rm -it \
     --user 999 \
@@ -42,7 +47,7 @@ cmd_restore() {
       --repo1-path=/pgbackrest \
       --pg1-path=/var/lib/postgresql/data \
       --log-level-console=detail \
-      --set="$setlabel" \
+      "${set_arg[@]}" \
       --type=immediate \
       --target-action=promote \
       --recovery-option=archive_mode=off \
@@ -73,8 +78,7 @@ case "$1" in
     cmd_list
     ;;
   restore)
-    [[ -n "${2:-}" ]] || { echo "Fehler: SETLABEL fehlt."; usage; }
-    cmd_restore "$2"
+    cmd_restore "${2:-}"
     ;;
   start)
     cmd_start
