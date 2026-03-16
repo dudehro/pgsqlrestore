@@ -1,0 +1,21 @@
+# PostgreSQL-Datendateien (vom Restore befüllt)
+data/
+
+# Logs
+logs/
+
+# Dump-Verzeichnis
+dumps/
+
+# Docker Build-Kontext (lokal gebaut)
+build/
+
+# Umgebungsvariablen
+.env
+.env.*
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*~
