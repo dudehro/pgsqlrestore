@@ -1,6 +1,6 @@
 services:
     postgres-restore:
-        image: ./build
+        build: ./build
         container_name: ${NETWORK_NAME:-kvwmap_prod}_pgsqlrestore
         hostname: ${NETWORK_NAME:-kvwmap_prod}_pgsqlrestore
         volumes:
