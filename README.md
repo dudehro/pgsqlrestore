@@ -1,6 +1,6 @@
 # pgsqlrestore
 
-Temporäre PostgreSQL-15-Instanz zum Wiederherstellen eines pgbackrest-Backups.
+Temporäre PostgreSQL-16-Instanz zum Wiederherstellen eines pgbackrest-Backups.
 Das Backup wird in `./data/` entpackt und anschließend als eigenständiger Container gestartet, der im bestehenden Docker-Netzwerk erreichbar ist.
 
 ---
@@ -48,19 +48,50 @@ Notiere das gewünschte `SETLABEL` aus der Ausgabe, z. B. `20240101-120000F`.
 ### 2. Backup wiederherstellen
 
 ```bash
-sudo ./restore.sh restore <SETLABEL>
+sudo ./restore.sh restore [SETLABEL] [OPTIONEN]
 ```
+
+Ohne `SETLABEL` wird das letzte Backup verwendet.
 
 | Parameter | Wert |
 |-----------|------|
 | Image | `percona/percona-pgbackrest:2.56.0` |
 | Stanza | `local` |
 | Zielverzeichnis | `./data/` |
-| Typ | `--type=immediate --target-action=promote` |
+| Typ | `--type=immediate --target-action=promote` (Default) |
 | Modus | `--delta` (vorhandene Dateien werden aktualisiert, nicht neu angelegt) |
 | Archivierung | deaktiviert (`archive_mode=off`, `archive_command=''`) |
 
-Nach Abschluss ist `./data/` eine vollständige, startbereite PostgreSQL-15-Instanz.
+**Optionen:**
+
+| Option | Bedeutung |
+|--------|-----------|
+| `--type=TYP` | Recovery-Typ von pgbackrest. Default: `immediate` (Wiederherstellung bis zum konsistenten Ende des Backups). |
+| `--target=TIMESTAMP` | Recovery-Ziel für Point-in-Time-Recovery (PITR). Setzt `--type` automatisch auf `time`, sofern nicht explizit anders angegeben. |
+
+**Beispiele:**
+
+```bash
+# Letztes Backup, --type=immediate
+sudo ./restore.sh restore
+
+# Bestimmtes Set, --type=immediate
+sudo ./restore.sh restore 20240101-120000F
+
+# Point-in-Time-Recovery bis zu einem Zeitpunkt (--type=time)
+sudo ./restore.sh restore --target='2024-01-01 12:00:00+00'
+
+# PITR aus einem bestimmten Set heraus
+sudo ./restore.sh restore 20240101-120000F --target='2024-01-01 12:00:00+00'
+```
+
+> **Hinweis zu PITR (`--type=time`):** Für die Wiederherstellung bis zu einem
+> Zeitpunkt muss pgbackrest die WAL-Segmente bis zum Zielzeitpunkt aus dem
+> Backup-Repo replayen können. Das setzt voraus, dass die WAL-Archive im Repo
+> vorhanden sind (WAL-Archivierung aktiv). Bei reinen Full-Backups ohne
+> archivierte WALs funktioniert `--type=time` nicht — nutze dann `immediate`.
+
+Nach Abschluss ist `./data/` eine vollständige, startbereite PostgreSQL-Instanz.
 
 ---
 
